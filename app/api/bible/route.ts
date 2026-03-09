@@ -1,15 +1,14 @@
 import { NextResponse } from 'next/server';
 import { KOREAN_BOOK_ABBREVIATIONS } from '@/lib/bookAbbreviations';
-import { KOREAN_TO_ENGLISH_BOOK_MAP } from '@/lib/bookMapping'; // Add this import
+import { KOREAN_TO_ENGLISH_BOOK_MAP } from '@/lib/bookMapping';
 import { OLD_TESTAMENT_BOOKS, NEW_TESTAMENT_BOOKS } from '@/lib/books'; 
 import KoreanBibleData from '@/lib/ko_krv_bible.json';
 import EnglishBibleData from '@/lib/en_kjv_bible.json';
 
-export const runtime = 'edge'; // Cloudflare Pages를 위한 설정
+export const runtime = 'edge';
 
-// Define a standardized type for a single verse for our app
 interface StandardizedVerse {
-...
+  verse: number;
   text: string;
 }
 
