@@ -5,9 +5,11 @@ import { OLD_TESTAMENT_BOOKS, NEW_TESTAMENT_BOOKS } from '@/lib/books';
 import KoreanBibleData from '@/lib/ko_krv_bible.json';
 import EnglishBibleData from '@/lib/en_kjv_bible.json';
 
+export const runtime = 'edge'; // Cloudflare Pages를 위한 설정
+
 // Define a standardized type for a single verse for our app
 interface StandardizedVerse {
-  verse: number;
+...
   text: string;
 }
 
