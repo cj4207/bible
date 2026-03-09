@@ -6,6 +6,11 @@ import { KOREAN_TO_ENGLISH_BOOK_MAP } from '@/lib/bookMapping';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { KOREAN_BOOK_ABBREVIATIONS } from '@/lib/bookAbbreviations';
 import { ENGLISH_BOOK_ABBREVIATIONS } from '@/lib/enBookAbbreviations';
+import KoreanBibleData from '@/lib/ko_krv_bible.json';
+import EnglishBibleData from '@/lib/en_kjv_bible.json';
+
+const KoreanBible: { [key: string]: string } = KoreanBibleData;
+const EnglishBible: { [key: string]: string } = EnglishBibleData;
 
 // Extend Window interface for SpeechRecognition
 declare global {
@@ -81,18 +86,49 @@ function BibleReaderContent() {
   }, [testament, book, displayedBooks]);
 
   useEffect(() => {
-    const fetchChapter = async () => {
+    const fetchChapter = () => {
       if (!book || !chapter) return;
       setIsLoading(true);
       setError(null);
       setVerses([]);
 
       try {
-        let apiUrl = `/api/bible?lang=${language}&book=${book}&chapter=${chapter}`;
-        const response = await fetch(apiUrl);
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || 'An unknown error occurred.');
-        setVerses(data);
+        let fetchedVerses: Verse[] = [];
+
+        if (language === 'ko') {
+          const bookAbbr = KOREAN_BOOK_ABBREVIATIONS[book];
+          if (!bookAbbr) throw new Error('Invalid Korean book name');
+          
+          const keyPrefix = `${bookAbbr}${chapter}:`;
+          fetchedVerses = Object.keys(KoreanBible)
+            .filter(key => key.startsWith(keyPrefix))
+            .map(key => ({
+              verse: parseInt(key.split(':')[1], 10),
+              text: KoreanBible[key],
+            }))
+            .sort((a, b) => a.verse - b.verse);
+
+        } else {
+          const bookInEnglish = KOREAN_TO_ENGLISH_BOOK_MAP[book];
+          if (!bookInEnglish) throw new Error('Invalid English book name mapping');
+
+          const keyPrefix = `${bookInEnglish} ${chapter}:`;
+          fetchedVerses = Object.keys(EnglishBible)
+            .filter(key => key.startsWith(keyPrefix))
+            .map(key => {
+              const verseMatch = key.match(/:(\d+)$/);
+              return {
+                verse: verseMatch ? parseInt(verseMatch[1], 10) : 0,
+                text: EnglishBible[key],
+              };
+            })
+            .sort((a, b) => a.verse - b.verse);
+        }
+
+        if (fetchedVerses.length === 0) {
+          throw new Error(`Chapter ${chapter} not found for ${book}`);
+        }
+        setVerses(fetchedVerses);
       } catch (err: any) {
         setError(err.message);
         setVerses([]);
