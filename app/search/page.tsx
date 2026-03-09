@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react'; // Added Suspense
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -26,8 +26,8 @@ type SearchResponse = {
 
 type Language = 'ko' | 'en';
 
-// --- SEARCH RESULTS COMPONENT ---
-export default function SearchResultsPage() {
+// Separate content into a component to use Suspense
+function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [results, setResults] = useState<Verse[]>([]);
@@ -56,10 +56,9 @@ export default function SearchResultsPage() {
         }
 
         if (data.type === 'verse_navigation') {
-          // If it's a verse navigation, redirect to the main page
           const verseParam = data.verse ? `&verse=${data.verse}` : '';
           router.push(`/?book=${encodeURIComponent(data.book)}&chapter=${data.chapter}&lang=${lang}${verseParam}`);
-          return; // Stop further rendering of this page
+          return;
         } else {
           setResults(data.results);
         }
@@ -74,7 +73,6 @@ export default function SearchResultsPage() {
     fetchSearchResults();
   }, [query, lang, router]);
 
-  // Helper function to highlight search term
   const highlightText = (text: string, searchTerm: string) => {
     if (!searchTerm) return text;
     const parts = text.split(new RegExp(`(${searchTerm})`, 'gi'));
@@ -128,5 +126,14 @@ export default function SearchResultsPage() {
         ))}
       </div>
     </div>
+  );
+}
+
+// Main SearchResultsPage component wrapped in Suspense
+export default function SearchResultsPage() {
+  return (
+    <Suspense fallback={<div className="container mt-5 text-center">Loading...</div>}>
+      <SearchContent />
+    </Suspense>
   );
 }
